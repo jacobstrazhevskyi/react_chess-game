@@ -1,8 +1,6 @@
 import React from 'react';
 import uuid from 'react-uuid';
 
-// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import {
@@ -12,17 +10,19 @@ import {
   faChessPawn,
   faChessQueen,
   faChessKnight,
+  faSquareFull,
   IconDefinition,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { Box, styled } from '@mui/material';
-import { useAppSelector } from '../../utils/hooks/useAppSelector';
+import { useBoard } from '../../utils/hooks/gameHooks/useBoard';
 
 type FigureType = 'rook' | 'king' | 'bishop' | 'pawn' | 'queen' | 'knight';
 
-type FiguresIcons = Record<FigureType, IconDefinition>;
+type FiguresIcons = Record<FigureType | 0, IconDefinition>;
 
 const figuresIcons: FiguresIcons = {
+  0: faSquareFull,
   rook: faChessRook,
   king: faChessKing,
   bishop: faChessBishop,
@@ -54,7 +54,7 @@ const StyledCellBox = styled(Box, {
 }));
 
 export const Board: React.FC = () => {
-  const board = useAppSelector(state => state.game.board);
+  const [board] = useBoard();
 
   return (
     <>
@@ -63,17 +63,19 @@ export const Board: React.FC = () => {
           {row.map((cell, cellIndex: number) => {
             const isDark = (rowIndex + cellIndex) % 2 === 1;
 
+            console.log(cell);
+
             return (
               <StyledCellBox
                 key={uuid()}
                 isDark={isDark}
-                hasFigure={Boolean(cell)}
+                hasFigure={Boolean(cell.figure)}
               >
                 {
-                  cell ? (
+                  cell.figure ? (
                     <FontAwesomeIcon
-                      icon={figuresIcons[cell.figure]}
-                      color={cell.hexColor}
+                      icon={figuresIcons[cell.figure.figureType]}
+                      color={cell.figure.hexColor}
                       style={{
                         stroke: 'black',
                         strokeWidth: 30,

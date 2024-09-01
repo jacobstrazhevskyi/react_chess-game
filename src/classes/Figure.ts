@@ -1,3 +1,5 @@
+import { Figure as FigureClassType } from '../types/Figure';
+
 type Position = {
   x: number,
   y: number,
@@ -5,24 +7,24 @@ type Position = {
 
 type FigureType = 'rook' | 'king' | 'bishop' | 'pawn' | 'queen' | 'knight';
 
-export abstract class Figure {
+export abstract class Figure implements FigureClassType {
   constructor(
     color: string,
-    figure: FigureType,
+    figureType: FigureType,
     position: Position,
     initialPosition: Position,
     hexColor: string,
   ) {
     this.color = color;
-    this.figure = figure;
+    this.figureType = figureType;
     this.position = position;
     this.initialPosition = initialPosition;
     this.hexColor = hexColor;
   }
 
-  color: string;
+  readonly color: string;
 
-  figure: string;
+  readonly figureType: FigureType;
 
   position: Position;
 

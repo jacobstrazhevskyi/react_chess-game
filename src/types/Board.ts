@@ -1,3 +1,3 @@
-import { Figure } from './Figure';
+import { Cell } from './Cell';
 
-export type Board = (0 | Figure)[][];
+export type Board = (Cell)[][];

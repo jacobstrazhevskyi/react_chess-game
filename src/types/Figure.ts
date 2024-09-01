@@ -6,8 +6,8 @@ type Position = {
 type FigureType = 'rook' | 'king' | 'bishop' | 'pawn' | 'queen' | 'knight';
 
 export interface Figure {
-  color: string,
-  figure: FigureType,
+  readonly color: string,
+  readonly figureType: FigureType,
   position: Position,
   readonly initialPosition: Position,
   hexColor: string,

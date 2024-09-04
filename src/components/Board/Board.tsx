@@ -1,4 +1,5 @@
-import React from 'react';
+/* eslint-disable no-nested-ternary */
+import React, { useEffect, useState } from 'react';
 import uuid from 'react-uuid';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -12,10 +13,17 @@ import {
   faChessKnight,
   faSquareFull,
   IconDefinition,
+  faCircle,
 } from '@fortawesome/free-solid-svg-icons';
 
 import { Box, styled } from '@mui/material';
 import { useBoard } from '../../utils/hooks/gameHooks/useBoard';
+import { useFigures } from '../../utils/hooks/gameHooks/useFigures';
+
+type Position = {
+  x: number,
+  y: number,
+};
 
 type FigureType = 'rook' | 'king' | 'bishop' | 'pawn' | 'queen' | 'knight';
 
@@ -53,8 +61,29 @@ const StyledCellBox = styled(Box, {
   cursor: `${hasFigure ? 'grab' : ''}`,
 }));
 
+const isMovePosition = (moves: Position[], cellPosition: Position) => {
+  const isPossibleMovePosition = moves.some(
+    move => move.x === cellPosition.x && move.y === cellPosition.y,
+  );
+
+  return isPossibleMovePosition;
+};
+
 export const Board: React.FC = () => {
-  const [board] = useBoard();
+  const [board, , , getFigureMoves] = useBoard();
+
+  const [, , , , selectedFigure, selectFigure] = useFigures();
+
+  const [availableMoves, setAvailableMoves] = useState<Position[]>([]);
+
+  useEffect(() => {
+    setAvailableMoves(getFigureMoves({
+      currentBoard: board,
+      figure: selectedFigure,
+    }));
+  }, [selectedFigure]);
+
+  console.log(availableMoves);
 
   return (
     <>
@@ -63,13 +92,26 @@ export const Board: React.FC = () => {
           {row.map((cell, cellIndex: number) => {
             const isDark = (rowIndex + cellIndex) % 2 === 1;
 
-            console.log(cell);
-
             return (
               <StyledCellBox
                 key={uuid()}
                 isDark={isDark}
                 hasFigure={Boolean(cell.figure)}
+                onClick={() => {
+                  if (!cell.figure) {
+                    return;
+                  }
+
+                  const {
+                    x,
+                    y,
+                  } = cell.position;
+
+                  selectFigure({
+                    x,
+                    y,
+                  });
+                }}
               >
                 {
                   cell.figure ? (
@@ -83,9 +125,19 @@ export const Board: React.FC = () => {
                         fontSize: '40px',
                       }}
                     />
-                  ) : (
-                    ''
-                  )
+                  ) : ''
+                }
+                {
+                  isMovePosition(availableMoves, cell.position) ? (
+                    <FontAwesomeIcon 
+                      icon={faCircle}
+                      size="1x"
+                      style={{
+                        color: '#000000',
+                        opacity: '0.3',
+                      }}
+                    />
+                  ) : ''
                 }
               </StyledCellBox>
             );

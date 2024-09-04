@@ -47,7 +47,7 @@ const App: React.FC = () => {
   const isFirstRender = useRef(true);
 
   const [whiteFigures, setWhiteFigures, blackFigures, setBlackFigures] = useFigures();
-  const [board,, setFigures] = useBoard();
+  const [board,, updateFigures] = useBoard();
 
   const handleResize = () => {
     const currentWindowSize = window.innerHeight + window.innerWidth;
@@ -63,7 +63,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (isFirstRender) {
-      setFigures({
+      updateFigures({
+        prevBoard: board,
         whiteFigures,
         blackFigures,
       });
@@ -80,7 +81,7 @@ const App: React.FC = () => {
     };
   }, [board]);
 
-  console.log(board);
+  // console.log(board);
 
   return (
     <StyledContainer>

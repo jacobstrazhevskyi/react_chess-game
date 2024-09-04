@@ -31,4 +31,6 @@ export abstract class Figure implements FigureClassType {
   readonly initialPosition: Position;
 
   hexColor: string;
+
+  abstract moves: number[][];
 }

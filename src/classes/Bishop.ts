@@ -9,4 +9,8 @@ export class Bishop extends Figure {
   constructor(color: string, position: Position, initialPosition: Position, hexColor: string) {
     super(color, 'bishop', position, initialPosition, hexColor);
   }
+
+  moves = [
+    [1, 1], [1, -1], [-1, 1], [-1, -1],
+  ];
 }

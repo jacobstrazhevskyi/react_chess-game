@@ -11,4 +11,5 @@ export interface Figure {
   position: Position,
   readonly initialPosition: Position,
   hexColor: string,
+  moves: number[][],
 }

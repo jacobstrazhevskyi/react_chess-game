@@ -4,14 +4,26 @@ import { Board } from '../../types/Board';
 import { Figure } from '../../types/Figure';
 
 type SetFiguresProps = {
+  prevBoard: Board,
   whiteFigures: Figure[],
   blackFigures: Figure[],
+};
+
+type Position = {
+  x: number,
+  y: number,
+};
+
+type GetFigureMovesProps = {
+  currentBoard: Board,
+  figure: Figure,
 };
 
 type BoardContextType = [
   Board,
   () => void,
-  ({ whiteFigures, blackFigures }: SetFiguresProps) => void,
+  ({ prevBoard, whiteFigures, blackFigures }: SetFiguresProps) => void,
+  ({ currentBoard, figure }: GetFigureMovesProps) => Position[],
 ];
 
 export const BoardContext = createContext<BoardContextType | undefined>(undefined);

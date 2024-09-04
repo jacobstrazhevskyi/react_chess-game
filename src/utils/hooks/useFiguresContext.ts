@@ -7,11 +7,18 @@ import {
 
 import { Figure } from '../../types/Figure';
 
+type Position = {
+  x: number,
+  y: number,
+};
+
 type FiguresContextType = [
   whiteFigures: Figure[],
   setWhiteFigures: Dispatch<SetStateAction<Figure[]>>,
   blackFigures: Figure[],
   setBlackFigures: Dispatch<SetStateAction<Figure[]>>,
+  selectedFigure: Figure,
+  selectFigure: ({ x, y }: Position) => void,
 ];
 
 export const FiguresContext = createContext<FiguresContextType | undefined>(undefined);

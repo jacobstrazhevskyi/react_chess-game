@@ -13,11 +13,18 @@ import { King } from '../../../classes/King';
 import { Pawn } from '../../../classes/Pawn';
 import { Figure } from '../../../types/Figure';
 
+type Position = {
+  x: number,
+  y: number,
+};
+
 type ReturnedFromUseFigures = [
   whiteFigures: Figure[],
   setWhiteFigures: Dispatch<SetStateAction<Figure[]>>,
   blackFigures: Figure[],
   setBlackFigures: Dispatch<SetStateAction<Figure[]>>,
+  selectedFigure: Figure,
+  selectFigure: ({ x, y }: Position) => void,
 ];
 
 const getWhitePawns = () => {
@@ -78,12 +85,29 @@ export const useFigures = (): ReturnedFromUseFigures => {
   const [whiteFigures, setWhiteFigures] = useState<Figure[]>(initialWhiteFigures);
   const [blackFigures, setBlackFigures] = useState<Figure[]>(initialBlackFigures);
 
+  const [selectedFigure, setSelectedFigure] = useState<Figure>();
+
+  const selectFigure = ({ x, y }: Position) => {
+    const figures = [...whiteFigures, ...blackFigures];
+
+    // console.log({ figures });
+
+    const findedFigure = figures.find((figure) => figure.position.x === x 
+      && figure.position.y === y);
+
+    // console.log(findedFigure);
+
+    setSelectedFigure(findedFigure);
+  };
+
   const value = useMemo(() => ([
     whiteFigures,
     setWhiteFigures,
     blackFigures,
     setBlackFigures,
-  ]), [whiteFigures, blackFigures]) as ReturnedFromUseFigures;
+    selectedFigure,
+    selectFigure,
+  ]), [whiteFigures, blackFigures, selectedFigure]) as ReturnedFromUseFigures;
 
   return value;
 };

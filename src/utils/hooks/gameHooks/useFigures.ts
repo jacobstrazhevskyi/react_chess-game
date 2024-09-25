@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {
   Dispatch,
   SetStateAction,
@@ -18,6 +19,24 @@ type Position = {
   y: number,
 };
 
+type MoveFigureProps = {
+  figure: Figure,
+  moveTo: Position,
+  currentWhiteFigures: Figure[],
+  currentBlackFigures: Figure[],
+};
+
+type IsCellWithOpponentFigureProps = {
+  position: Position,
+  figureColor: Figure['color'],
+  opponentFigures: Figure[],
+};
+
+type GetFiguresWithoutDeletedProps = {
+  figures: Figure[],
+  position: Position,
+}
+
 type ReturnedFromUseFigures = [
   whiteFigures: Figure[],
   setWhiteFigures: Dispatch<SetStateAction<Figure[]>>,
@@ -25,6 +44,12 @@ type ReturnedFromUseFigures = [
   setBlackFigures: Dispatch<SetStateAction<Figure[]>>,
   selectedFigure: Figure,
   selectFigure: ({ x, y }: Position) => void,
+  moveFigure: ({
+    moveTo,
+    figure,
+    currentWhiteFigures,
+    currentBlackFigures,
+  }: MoveFigureProps) => void
 ];
 
 const getWhitePawns = () => {
@@ -90,14 +115,113 @@ export const useFigures = (): ReturnedFromUseFigures => {
   const selectFigure = ({ x, y }: Position) => {
     const figures = [...whiteFigures, ...blackFigures];
 
-    // console.log({ figures });
-
     const findedFigure = figures.find((figure) => figure.position.x === x 
       && figure.position.y === y);
 
-    // console.log(findedFigure);
-
     setSelectedFigure(findedFigure);
+  };
+
+  const isCellWithOpponentFigure = ({
+    position,
+    figureColor,
+    opponentFigures,
+  }: IsCellWithOpponentFigureProps) => {
+    const { x, y } = position;
+
+    return opponentFigures.some(figure => (
+      figure.position.x === x
+      && figure.position.y === y
+      && figureColor !== figure.color
+    ));
+  };
+
+  const getFiguresWithoutDeleted = ({
+    figures,
+    position,
+  }: GetFiguresWithoutDeletedProps) => {
+    const newFigures = [...figures];
+
+    const { x, y } = position;
+
+    const indexToDelete = newFigures.findIndex(figure => (
+      figure.position.x === x
+      && figure.position.y === y
+    ));
+
+    if (indexToDelete !== -1) {
+      newFigures.splice(indexToDelete, 1);
+    }
+
+    return newFigures;
+  };
+
+  const moveFigure = ({
+    moveTo,
+    figure,
+    currentWhiteFigures,
+    currentBlackFigures,
+  }: MoveFigureProps) => {
+    for (let i = 0; i < currentWhiteFigures.length; i++) {
+      if (
+        currentWhiteFigures[i].position.x === figure.position.x
+        && currentWhiteFigures[i].position.y === figure.position.y
+      ) {
+        const newWhiteFigures = [...currentWhiteFigures];
+
+        const newFigure = figure;
+
+        newFigure.position = moveTo;
+
+        if (isCellWithOpponentFigure({
+          position: moveTo,
+          figureColor: figure.color,
+          opponentFigures: currentBlackFigures,
+        })) {
+          setBlackFigures(
+            getFiguresWithoutDeleted({
+              figures: currentBlackFigures,
+              position: moveTo,
+            }),
+          );
+        }
+
+        newWhiteFigures[i] = newFigure;
+
+        setWhiteFigures(newWhiteFigures);
+        return;
+      }
+    }
+
+    for (let i = 0; i < currentBlackFigures.length; i++) {
+      if (
+        currentBlackFigures[i].position.x === figure.position.x
+        && currentBlackFigures[i].position.y === figure.position.y
+      ) {
+        const newBlackFigures = [...currentBlackFigures];
+
+        const newFigure = figure;
+
+        newFigure.position = moveTo;
+
+        if (isCellWithOpponentFigure({
+          position: moveTo,
+          figureColor: figure.color,
+          opponentFigures: currentWhiteFigures,
+        })) {
+          setWhiteFigures(
+            getFiguresWithoutDeleted({
+              figures: currentWhiteFigures,
+              position: moveTo,
+            }),
+          );
+        }
+
+        newBlackFigures[i] = newFigure;
+
+        setBlackFigures(newBlackFigures);
+        return;
+      }
+    }
   };
 
   const value = useMemo(() => ([
@@ -107,6 +231,7 @@ export const useFigures = (): ReturnedFromUseFigures => {
     setBlackFigures,
     selectedFigure,
     selectFigure,
+    moveFigure,
   ]), [whiteFigures, blackFigures, selectedFigure]) as ReturnedFromUseFigures;
 
   return value;

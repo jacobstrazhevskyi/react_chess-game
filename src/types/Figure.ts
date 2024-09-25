@@ -12,4 +12,5 @@ export interface Figure {
   readonly initialPosition: Position,
   hexColor: string,
   moves: number[][],
+  firstMove?: boolean,
 }

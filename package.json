@@ -1,6 +1,6 @@
 {
-  "name": "react_snake-game",
-  "homepage": "https://jacobstrazhevskyi.github.io/react_snake-game/",
+  "name": "react_chess-game",
+  "homepage": "https://jacobstrazhevskyi.github.io/react_chess-game/",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -29,7 +29,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "deploy": "npm run build && gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [

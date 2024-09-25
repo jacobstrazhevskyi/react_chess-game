@@ -64,7 +64,6 @@ const App: React.FC = () => {
   useEffect(() => {
     if (isFirstRender) {
       updateFigures({
-        prevBoard: board,
         whiteFigures,
         blackFigures,
       });
@@ -80,8 +79,6 @@ const App: React.FC = () => {
       window.removeEventListener('resize', handleResize);
     };
   }, [board]);
-
-  // console.log(board);
 
   return (
     <StyledContainer>

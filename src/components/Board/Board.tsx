@@ -59,6 +59,7 @@ const StyledCellBox = styled(Box, {
   justifyContent: 'center',
   backgroundColor: `${isDark ? '#B58863' : '#F0D9B5'}`,
   cursor: `${hasFigure ? 'grab' : ''}`,
+  position: 'relative',
 }));
 
 const isMovePosition = (moves: Position[], cellPosition: Position) => {
@@ -70,20 +71,24 @@ const isMovePosition = (moves: Position[], cellPosition: Position) => {
 };
 
 export const Board: React.FC = () => {
-  const [board, , , getFigureMoves] = useBoard();
+  const [board, , updateFigures, getFigureMoves] = useBoard();
 
-  const [, , , , selectedFigure, selectFigure] = useFigures();
+  const [whiteFigures, , blackFigures, , selectedFigure, selectFigure, moveFigure] = useFigures();
 
   const [availableMoves, setAvailableMoves] = useState<Position[]>([]);
 
   useEffect(() => {
-    setAvailableMoves(getFigureMoves({
-      currentBoard: board,
-      figure: selectedFigure,
-    }));
+    setAvailableMoves(
+      getFigureMoves({
+        currentBoard: board,
+        figure: selectedFigure,
+      }),
+    );
   }, [selectedFigure]);
 
-  console.log(availableMoves);
+  useEffect(() => {
+    updateFigures({ whiteFigures, blackFigures });
+  }, [whiteFigures, blackFigures]);
 
   return (
     <>
@@ -107,10 +112,12 @@ export const Board: React.FC = () => {
                     y,
                   } = cell.position;
 
-                  selectFigure({
-                    x,
-                    y,
-                  });
+                  if (selectedFigure) {
+                    selectFigure({ x: -1, y: -1 });
+                    return;
+                  }
+
+                  selectFigure({ x, y });
                 }}
               >
                 {
@@ -129,14 +136,41 @@ export const Board: React.FC = () => {
                 }
                 {
                   isMovePosition(availableMoves, cell.position) ? (
-                    <FontAwesomeIcon 
-                      icon={faCircle}
-                      size="1x"
-                      style={{
-                        color: '#000000',
-                        opacity: '0.3',
+                    <Box
+                      onClick={() => {
+                        moveFigure({
+                          moveTo: cell.position,
+                          figure: selectedFigure,
+                          currentWhiteFigures: whiteFigures,
+                          currentBlackFigures: blackFigures,
+                        });
+                        selectFigure({
+                          x: -1,
+                          y: -1,
+                        });
+                        setAvailableMoves([]);
                       }}
-                    />
+                      style={{
+                        position: 'absolute',
+                        left: '0',
+                        top: '0',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: '100%',
+                        height: '100%',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <FontAwesomeIcon
+                        icon={faCircle}
+                        size="1x"
+                        style={{
+                          color: '#000000',
+                          opacity: '0.3',
+                        }}
+                      />
+                    </Box>
                   ) : ''
                 }
               </StyledCellBox>

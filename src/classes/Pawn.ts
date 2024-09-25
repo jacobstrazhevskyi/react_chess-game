@@ -10,5 +10,7 @@ export class Pawn extends Figure {
     super(color, 'pawn', position, initialPosition, hexColor);
   }
 
-  moves = [this.color === 'white' ? [0, 1] : [0, -1]];
+  moves = [this.color === 'white' ? [0, -1] : [0, 1]];
+
+  firstMove = true;
 }

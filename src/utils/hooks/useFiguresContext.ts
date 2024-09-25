@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import {
   createContext,
   Dispatch,
@@ -12,6 +13,13 @@ type Position = {
   y: number,
 };
 
+type MoveFigureProps = {
+  figure: Figure,
+  moveTo: Position,
+  currentWhiteFigures: Figure[],
+  currentBlackFigures: Figure[],
+};
+
 type FiguresContextType = [
   whiteFigures: Figure[],
   setWhiteFigures: Dispatch<SetStateAction<Figure[]>>,
@@ -19,6 +27,12 @@ type FiguresContextType = [
   setBlackFigures: Dispatch<SetStateAction<Figure[]>>,
   selectedFigure: Figure,
   selectFigure: ({ x, y }: Position) => void,
+  moveFigure: ({
+    moveTo,
+    figure,
+    currentWhiteFigures,
+    currentBlackFigures,
+  }: MoveFigureProps) => void
 ];
 
 export const FiguresContext = createContext<FiguresContextType | undefined>(undefined);

@@ -3,8 +3,7 @@ import { createContext, useContext } from 'react';
 import { Board } from '../../types/Board';
 import { Figure } from '../../types/Figure';
 
-type SetFiguresProps = {
-  prevBoard: Board,
+type UpdateFiguresProps = {
   whiteFigures: Figure[],
   blackFigures: Figure[],
 };
@@ -22,7 +21,7 @@ type GetFigureMovesProps = {
 type BoardContextType = [
   Board,
   () => void,
-  ({ prevBoard, whiteFigures, blackFigures }: SetFiguresProps) => void,
+  ({ whiteFigures, blackFigures }: UpdateFiguresProps) => void,
   ({ currentBoard, figure }: GetFigureMovesProps) => Position[],
 ];
 

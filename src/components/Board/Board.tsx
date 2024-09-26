@@ -111,20 +111,29 @@ export const Board: React.FC = () => {
                   }
 
                   const {
-                    x,
-                    y,
-                  } = cell.position;
+                    figure,
+                    position: {
+                      x,
+                      y,
+                    },
+                  } = cell;
 
-                  if (selectedFigure) {
+                  if (figure.color !== playerTurn) {
+                    return;
+                  }
+
+                  if (!selectedFigure) {
+                    selectFigure({ x, y });
+                    return;
+                  }
+
+                  if (selectedFigure.position.x === x
+                    && selectedFigure.position.y === y
+                  ) {
                     selectFigure({ x: -1, y: -1 });
-                    return;
+                  } else {
+                    selectFigure({ x, y });
                   }
-
-                  if (cell.figure.color !== playerTurn) {
-                    return;
-                  }
-
-                  selectFigure({ x, y });
                 }}
               >
                 {

@@ -19,6 +19,7 @@ import {
 import { Box, styled } from '@mui/material';
 import { useBoard } from '../../utils/hooks/gameHooks/useBoard';
 import { useFigures } from '../../utils/hooks/gameHooks/useFigures';
+import { useGameStatus } from '../../utils/hooks/gameHooks/useGameStatus';
 
 type Position = {
   x: number,
@@ -77,6 +78,8 @@ export const Board: React.FC = () => {
 
   const [availableMoves, setAvailableMoves] = useState<Position[]>([]);
 
+  const [playerTurn, togglePlayerTurn] = useGameStatus();
+
   useEffect(() => {
     setAvailableMoves(
       getFigureMoves({
@@ -117,6 +120,10 @@ export const Board: React.FC = () => {
                     return;
                   }
 
+                  if (cell.figure.color !== playerTurn) {
+                    return;
+                  }
+
                   selectFigure({ x, y });
                 }}
               >
@@ -149,6 +156,7 @@ export const Board: React.FC = () => {
                           y: -1,
                         });
                         setAvailableMoves([]);
+                        togglePlayerTurn(playerTurn);
                       }}
                       style={{
                         position: 'absolute',

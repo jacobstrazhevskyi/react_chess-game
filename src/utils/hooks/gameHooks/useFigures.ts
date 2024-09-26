@@ -13,6 +13,7 @@ import { Queen } from '../../../classes/Queen';
 import { King } from '../../../classes/King';
 import { Pawn } from '../../../classes/Pawn';
 import { Figure } from '../../../types/Figure';
+import { useGameStatus } from './useGameStatus';
 
 type Position = {
   x: number,
@@ -107,6 +108,8 @@ const initialBlackFigures = [
 ];
 
 export const useFigures = (): ReturnedFromUseFigures => {
+  const addBeatenFigureToCount = useGameStatus()[4];
+
   const [whiteFigures, setWhiteFigures] = useState<Figure[]>(initialWhiteFigures);
   const [blackFigures, setBlackFigures] = useState<Figure[]>(initialBlackFigures);
 
@@ -149,6 +152,7 @@ export const useFigures = (): ReturnedFromUseFigures => {
     ));
 
     if (indexToDelete !== -1) {
+      addBeatenFigureToCount(newFigures[indexToDelete]);
       newFigures.splice(indexToDelete, 1);
     }
 

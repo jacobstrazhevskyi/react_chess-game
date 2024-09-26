@@ -1,11 +1,15 @@
 import { useContext, useMemo, useState } from 'react';
 import { GameStatusContext } from '../useGameStatusContext';
+import { Figure } from '../../../types/Figure';
 
 type Color = 'white' | 'black';
 
 type ReturnedFromUseGameStatus = [
   playerTurn: Color,
   togglePlayerTurn: (currentPlayer: Color) => void,
+  beatenBlackFigures: Figure[],
+  beatenWhiteFigures: Figure[],
+  addBeatenFigureToCount: (figure: Figure) => void,
 ];
 
 export const useGameStatus = (): ReturnedFromUseGameStatus => {
@@ -16,6 +20,9 @@ export const useGameStatus = (): ReturnedFromUseGameStatus => {
   }
 
   const [playerTurn, setplayerTurn] = useState('white');
+
+  const [beatenBlackFigures, setBeatenBlackFigures] = useState<Figure[]>([]);
+  const [beatenWhiteFigures, setBeatenWhiteFigures] = useState<Figure[]>([]);
 
   const togglePlayerTurn = (currentPlayer: Color) => {
     let newPlayer = currentPlayer;
@@ -29,10 +36,27 @@ export const useGameStatus = (): ReturnedFromUseGameStatus => {
     setplayerTurn(newPlayer);
   };
 
+  const addBeatenFigureToCount = (figure: Figure) => {
+    const figureColor = figure.color;
+
+    if (figureColor === 'black') {
+      setBeatenBlackFigures([...beatenBlackFigures, figure]);
+    } else {
+      setBeatenWhiteFigures([...beatenWhiteFigures, figure]);
+    }
+  };
+
   const value = useMemo(() => [
     playerTurn,
     togglePlayerTurn,
-  ], [playerTurn]) as ReturnedFromUseGameStatus;
+    beatenBlackFigures,
+    beatenWhiteFigures,
+    addBeatenFigureToCount,
+  ], [
+    playerTurn,
+    beatenBlackFigures,
+    beatenWhiteFigures,
+  ]) as ReturnedFromUseGameStatus;
 
   return value;
 };

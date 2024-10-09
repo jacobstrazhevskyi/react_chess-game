@@ -13,4 +13,5 @@ export interface Figure {
   hexColor: string,
   moves: number[][],
   firstMove?: boolean,
+  beatMove?: number[][],
 }

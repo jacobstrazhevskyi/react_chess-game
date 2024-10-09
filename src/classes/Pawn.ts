@@ -13,4 +13,6 @@ export class Pawn extends Figure {
   moves = [this.color === 'white' ? [0, -1] : [0, 1]];
 
   firstMove = true;
+
+  beatMove = this.color === 'white' ? [...[[1, -1], [-1, -1]]] : [...[[1, 1], [-1, 1]]];
 }

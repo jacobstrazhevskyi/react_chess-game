@@ -1,4 +1,11 @@
-import { useContext, useMemo, useState } from 'react';
+/* eslint-disable no-unused-vars */
+import {
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+} from 'react';
+
 import { GameStatusContext } from '../useGameStatusContext';
 import { Figure } from '../../../types/Figure';
 
@@ -24,7 +31,7 @@ export const useGameStatus = (): ReturnedFromUseGameStatus => {
   const [beatenBlackFigures, setBeatenBlackFigures] = useState<Figure[]>([]);
   const [beatenWhiteFigures, setBeatenWhiteFigures] = useState<Figure[]>([]);
 
-  const togglePlayerTurn = (currentPlayer: Color) => {
+  const togglePlayerTurn = useCallback((currentPlayer: Color) => {
     let newPlayer = currentPlayer;
 
     if (currentPlayer === 'white') {
@@ -34,17 +41,25 @@ export const useGameStatus = (): ReturnedFromUseGameStatus => {
     }
 
     setplayerTurn(newPlayer);
-  };
+  }, []);
 
-  const addBeatenFigureToCount = (figure: Figure) => {
+  const addBeatenFigureToCount = useCallback((figure: Figure) => {
     const figureColor = figure.color;
 
+    let newBeatenFigures;
+
     if (figureColor === 'black') {
-      setBeatenBlackFigures([...beatenBlackFigures, figure]);
+      newBeatenFigures = beatenBlackFigures;
+      newBeatenFigures.push(figure);
+
+      setBeatenBlackFigures(newBeatenFigures);
     } else {
-      setBeatenWhiteFigures([...beatenWhiteFigures, figure]);
+      newBeatenFigures = beatenWhiteFigures;
+      newBeatenFigures.push(figure);
+
+      setBeatenWhiteFigures(newBeatenFigures);
     }
-  };
+  }, []);
 
   const value = useMemo(() => [
     playerTurn,

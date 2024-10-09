@@ -7,10 +7,12 @@ import {
   useCallback,
 } from 'react';
 
+import { Cell } from '../../../classes/Cell';
+
+import { BoardContext } from '../useBoardContext';
+
 import { Board } from '../../../types/Board';
 import { Figure } from '../../../types/Figure';
-import { Cell } from '../../../classes/Cell';
-import { BoardContext } from '../useBoardContext';
 
 import { aux as settingsAux } from '../../../auх/settings';
 
@@ -33,6 +35,30 @@ type UpdateFiguresProps = {
   blackFigures: Figure[],
 };
 
+type GetLongRangeMovesProps = {
+  figure: Figure,
+  currentBoard: Board,
+  moves: number[][],
+};
+
+type GetPawnMovesProps = {
+  figure: Figure,
+  currentBoard: Board,
+};
+
+type GetDefaultMovesProps = {
+  figure: Figure,
+  currentBoard: Board,
+  moves: number[][],
+};
+
+type TryToAddMoveProps = {
+  position: Position,
+  currentBoard: Board,
+  figure: Figure,
+  addToAvailableMoves: (position: Position) => void,
+};
+
 type ReturnedFromUseBoard = [
   Board,
   () => void,
@@ -53,15 +79,15 @@ export const useBoard = (): ReturnedFromUseBoard => {
         .fill(null).map((__, x) => new Cell({ x, y }, 0))),
   );
 
-  const createBoard = () => {
+  const createBoard = useCallback(() => {
     setBoard(
       new Array(BOARD_SIZE)
         .fill(null).map((_, y) => new Array(BOARD_SIZE)
           .fill(null).map((__, x) => new Cell({ x, y }, 0))),
     );
-  };
+  }, []);
 
-  const updateFigures = ({
+  const updateFigures = useCallback(({
     whiteFigures,
     blackFigures,
   }: UpdateFiguresProps) => {
@@ -80,17 +106,19 @@ export const useBoard = (): ReturnedFromUseBoard => {
     });
 
     setBoard(newBoard);
-  };
+  }, []);
 
   const canBeatOpponentFigure = useCallback((
     { x, y }: Position,
     currentBoard: Board,
     figure: Figure,
   ) => {
-    if (currentBoard[y][x].figure) {
-      if (currentBoard[y][x].figure.color !== figure.color) {
-        return true;
-      }
+    if (!currentBoard[y][x]?.figure) {
+      return false;
+    }
+
+    if (currentBoard[y][x].figure.color !== figure.color) {
+      return true;
     }
 
     return false;
@@ -102,89 +130,123 @@ export const useBoard = (): ReturnedFromUseBoard => {
     && (currentBoard[y][x].figure ? currentBoard[y][x].figure.color !== figureColor : true)
   ), []);
 
-  const getFigureMoves = ({ currentBoard, figure }: GetFigureMovesProps): Position[] => {
+  const getLongRangeMoves = useCallback(({
+    figure,
+    currentBoard,
+    moves,
+  }: GetLongRangeMovesProps) => {
     const availableMoves: Position[] = [];
-
-    if (!figure) {
-      return [];
-    }
 
     const { x, y } = figure.position;
 
-    const { moves } = figure;
+    moves.forEach(([dx, dy]) => {
+      let newX = x;
+      let newY = y;
 
-    if (figure.figureType === 'bishop'
-      || figure.figureType === 'rook'
-      || figure.figureType === 'queen'
-    ) {
-      moves.forEach(([dx, dy]) => {
-        let newX = x;
-        let newY = y;
+      while (true) {
+        newX += dx;
+        newY += dy;
 
-        while (true) {
-          newX += dx;
-          newY += dy;
-
-          if (
-            !isValidMove({ x: newX, y: newY }, currentBoard, figure.color)
-          ) {
-            break;
-          }
-
-          if (canBeatOpponentFigure({ x: newX, y: newY }, currentBoard, figure)) {
-            availableMoves.push({ x: newX, y: newY });
-            break;
-          }
-
-          availableMoves.push({ x: newX, y: newY });
+        if (
+          !isValidMove({ x: newX, y: newY }, currentBoard, figure.color)
+        ) {
+          break;
         }
-      });
 
-      return availableMoves;
-    }
+        availableMoves.push({ x: newX, y: newY });
 
-    if (figure.figureType === 'pawn') {
-      const [dx, dy] = moves[0];
-
-      let newX = x + dx;
-      let newY = y + dy;
-
-      if (
-        isValidMove(
-          { x: newX, y: newY },
-          currentBoard,
-          figure.color,
-        )
-        && !canBeatOpponentFigure(
-          { x: newX, y: newY },
-          currentBoard,
-          figure,
-        )
-      ) {
-        availableMoves.push({
-          x: newX,
-          y: newY,
-        });
-
-        if (figure.firstMove) {
-          newX += dx;
-          newY += dy;
-
-          if (!canBeatOpponentFigure(
-            { x: newX, y: newY },
-            currentBoard,
-            figure,
-          )) {
-            availableMoves.push({
-              x: newX,
-              y: newY,
-            });
-          }
+        if (canBeatOpponentFigure({ x: newX, y: newY }, currentBoard, figure)) {
+          break;
         }
       }
+    });
 
-      return availableMoves;
+    return availableMoves;
+  }, []);
+
+  const tryToAddMove = useCallback(({
+    position,
+    currentBoard,
+    figure,
+    addToAvailableMoves,
+  }: TryToAddMoveProps) => {
+    const { x, y } = position;
+
+    if (
+      isValidMove(
+        { x, y },
+        currentBoard,
+        figure.color,
+      )
+      && !canBeatOpponentFigure(
+        { x, y },
+        currentBoard,
+        figure,
+      )
+    ) {
+      addToAvailableMoves({ x, y });
     }
+  }, []);
+
+  const getPawnMoves = useCallback(({
+    figure,
+    currentBoard,
+  }: GetPawnMovesProps) => {
+    const availableMoves: Position[] = [];
+
+    const addToAvailableMoves = (position: Position) => availableMoves.push(position);
+
+    const [dx, dy] = figure.moves[0];
+    const { x, y } = figure.position;
+    const beatMoves = figure.beatMove as number[][];
+
+    const newX = x + dx;
+    const newY = y + dy;
+
+    tryToAddMove({
+      addToAvailableMoves,
+      currentBoard,
+      figure,
+      position: { x: newX, y: newY },
+    });
+
+    if (figure.firstMove) {
+      tryToAddMove({
+        addToAvailableMoves,
+        currentBoard,
+        figure,
+        position: { x: newX + dx, y: newY + dy },
+      });
+    }
+
+    beatMoves.forEach(([bdx, bdy]) => {
+      const newBeatX = x + bdx;
+      const newBeatY = y + bdy;
+
+      if (!canBeatOpponentFigure(
+        { x: newBeatX, y: newBeatY },
+        currentBoard,
+        figure,
+      )) {
+        return;
+      }
+
+      availableMoves.push({
+        x: newBeatX,
+        y: newBeatY,
+      });
+    });
+
+    return availableMoves;
+  }, []);
+
+  const getDefaultMoves = useCallback(({
+    currentBoard,
+    figure,
+    moves,
+  }: GetDefaultMovesProps) => {
+    const availableMoves: Position[] = [];
+    const { x, y } = figure.position;
 
     moves.forEach(([dx, dy]) => {
       const newX = x + dx;
@@ -196,7 +258,35 @@ export const useBoard = (): ReturnedFromUseBoard => {
     });
 
     return availableMoves;
-  };
+  }, []);
+
+  const getFigureMoves = useCallback(({
+    currentBoard,
+    figure,
+  }: GetFigureMovesProps): Position[] => {
+    if (!figure) {
+      return [];
+    }
+
+    const { figureType } = figure;
+
+    switch (figureType) {
+      case 'bishop':
+      case 'rook':
+      case 'queen':
+        return getLongRangeMoves({ currentBoard, figure, moves: figure.moves });
+
+      case 'pawn':
+        return getPawnMoves({ currentBoard, figure });
+
+      case 'king':
+      case 'knight':
+        return getDefaultMoves({ currentBoard, figure, moves: figure.moves });
+
+      default:
+        return [];
+    }
+  }, []);
 
   const value = useMemo(() => [
     board,

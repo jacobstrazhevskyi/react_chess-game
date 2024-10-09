@@ -2,6 +2,8 @@
 import {
   Dispatch,
   SetStateAction,
+  useCallback,
+  useContext,
   useMemo,
   useState,
 } from 'react';
@@ -12,8 +14,12 @@ import { Bishop } from '../../../classes/Bishop';
 import { Queen } from '../../../classes/Queen';
 import { King } from '../../../classes/King';
 import { Pawn } from '../../../classes/Pawn';
-import { Figure } from '../../../types/Figure';
+
+import { FiguresContext } from '../useFiguresContext';
+
 import { useGameStatus } from './useGameStatus';
+
+import { Figure } from '../../../types/Figure';
 
 type Position = {
   x: number,
@@ -38,13 +44,44 @@ type GetFiguresWithoutDeletedProps = {
   position: Position,
 }
 
+type IsThisFigureMatchInColorAndThisFigureIsToMoveProps = {
+  currentFigures: Figure[],
+  currentOpponentFigures: Figure[],
+  figure: Figure,
+  moveTo: Position,
+  setFigures: (value: Figure[]) => void,
+  setOpponentFigures: (value: Figure[]) => void,
+}
+
+type CheckIsFigureToMoveAndSetFiguresAndReturnStatusProps = {
+  currentFigures: Figure[],
+  currentOpponentFigures: Figure[],
+  figure: Figure,
+  moveTo: Position,
+  setFigures: (value: Figure[]) => void,
+  setOpponentFigures: (value: Figure[]) => void,
+  indexOfFigure: number,
+};
+
+type CheckForOpponentFigureAndSetProps = {
+  moveTo: Position,
+  figure: Figure,
+  currentOpponentFigures: Figure[],
+  setOpponentFigures: (value: Figure[]) => void,
+};
+
+type CheckFigureTypeIsPawnAndSetFirstMovePropToFalseProps = {
+  figure: Figure,
+  setPawnFirstMovePropToFalse: () => void,
+};
+
 type ReturnedFromUseFigures = [
   whiteFigures: Figure[],
   setWhiteFigures: Dispatch<SetStateAction<Figure[]>>,
   blackFigures: Figure[],
   setBlackFigures: Dispatch<SetStateAction<Figure[]>>,
   selectedFigure: Figure,
-  selectFigure: ({ x, y }: Position) => void,
+  selectFigure: ({ x, y }: Position, figureColor?: 'black' | 'white') => void,
   moveFigure: ({
     moveTo,
     figure,
@@ -108,6 +145,12 @@ const initialBlackFigures = [
 ];
 
 export const useFigures = (): ReturnedFromUseFigures => {
+  const context = useContext(FiguresContext);
+
+  if (context) {
+    return context;
+  }
+
   const addBeatenFigureToCount = useGameStatus()[4];
 
   const [whiteFigures, setWhiteFigures] = useState<Figure[]>(initialWhiteFigures);
@@ -115,16 +158,16 @@ export const useFigures = (): ReturnedFromUseFigures => {
 
   const [selectedFigure, setSelectedFigure] = useState<Figure>();
 
-  const selectFigure = ({ x, y }: Position) => {
+  const selectFigure = useCallback(({ x, y }: Position, figureColor: 'white' | 'black') => {
     const figures = [...whiteFigures, ...blackFigures];
 
-    const findedFigure = figures.find((figure) => figure.position.x === x 
-      && figure.position.y === y);
+    const findedFigure = figures.find((figure) => figure.position.x === x
+      && figure.position.y === y && figure.color === figureColor);
 
     setSelectedFigure(findedFigure);
-  };
+  }, []);
 
-  const isCellWithOpponentFigure = ({
+  const isCellWithOpponentFigure = useCallback(({
     position,
     figureColor,
     opponentFigures,
@@ -136,9 +179,9 @@ export const useFigures = (): ReturnedFromUseFigures => {
       && figure.position.y === y
       && figureColor !== figure.color
     ));
-  };
+  }, []);
 
-  const getFiguresWithoutDeleted = ({
+  const getFiguresWithoutDeleted = useCallback(({
     figures,
     position,
   }: GetFiguresWithoutDeletedProps) => {
@@ -157,76 +200,133 @@ export const useFigures = (): ReturnedFromUseFigures => {
     }
 
     return newFigures;
-  };
+  }, []);
 
-  const moveFigure = ({
+  const checkFigureTypeIsPawnAndSetFirstMovePropToFalse = useCallback(({
+    figure,
+    setPawnFirstMovePropToFalse,
+  }: CheckFigureTypeIsPawnAndSetFirstMovePropToFalseProps) => {
+    if (figure.figureType === 'pawn') {
+      setPawnFirstMovePropToFalse();
+    }
+  }, []);
+
+  const checkForOpponentFigureAndSet = useCallback(({
+    moveTo,
+    figure,
+    currentOpponentFigures,
+    setOpponentFigures,
+  }: CheckForOpponentFigureAndSetProps) => {
+    if (isCellWithOpponentFigure({
+      position: moveTo,
+      figureColor: figure.color,
+      opponentFigures: currentOpponentFigures,
+    })) {
+      setOpponentFigures(
+        getFiguresWithoutDeleted({
+          figures: currentOpponentFigures,
+          position: moveTo,
+        }),
+      );
+    }
+  }, []);
+
+  const checkIsFigureToMoveAndSetFiguresAndReturnStatus = useCallback(({
+    currentFigures,
+    figure,
+    moveTo,
+    setFigures,
+    setOpponentFigures,
+    currentOpponentFigures,
+    indexOfFigure,
+  }: CheckIsFigureToMoveAndSetFiguresAndReturnStatusProps) => {
+    if (
+      currentFigures[indexOfFigure].position.x === figure.position.x
+      && currentFigures[indexOfFigure].position.y === figure.position.y
+    ) {
+      const newFigures = [...currentFigures];
+
+      const newFigure = figure;
+
+      newFigure.position = moveTo;
+
+      const setPawnFirstMovePropToFalse = () => {
+        newFigure.firstMove = false;
+      };
+
+      checkFigureTypeIsPawnAndSetFirstMovePropToFalse({
+        figure,
+        setPawnFirstMovePropToFalse,
+      });
+
+      checkForOpponentFigureAndSet({
+        currentOpponentFigures,
+        figure,
+        moveTo,
+        setOpponentFigures,
+      });
+
+      newFigures[indexOfFigure] = newFigure;
+
+      setFigures(newFigures);
+
+      return true;
+    }
+
+    return false;
+  }, []);
+
+  const checkIsThisFigureMatchInColorAndThisFigureIsToMoveAndSetFigures = useCallback(({
+    currentFigures,
+    currentOpponentFigures,
+    figure,
+    moveTo,
+    setFigures,
+    setOpponentFigures,
+  }: IsThisFigureMatchInColorAndThisFigureIsToMoveProps) => {
+    for (let i = 0; i < currentFigures.length; i++) {
+      const isFigureToMove = checkIsFigureToMoveAndSetFiguresAndReturnStatus({
+        currentFigures,
+        currentOpponentFigures,
+        figure,
+        moveTo,
+        setFigures,
+        setOpponentFigures,
+        indexOfFigure: i,
+      });
+
+      if (isFigureToMove) {
+        return;
+      }
+    }
+  }, []);
+
+  const moveFigure = useCallback(({
     moveTo,
     figure,
     currentWhiteFigures,
     currentBlackFigures,
   }: MoveFigureProps) => {
-    for (let i = 0; i < currentWhiteFigures.length; i++) {
-      if (
-        currentWhiteFigures[i].position.x === figure.position.x
-        && currentWhiteFigures[i].position.y === figure.position.y
-      ) {
-        const newWhiteFigures = [...currentWhiteFigures];
-
-        const newFigure = figure;
-
-        newFigure.position = moveTo;
-
-        if (isCellWithOpponentFigure({
-          position: moveTo,
-          figureColor: figure.color,
-          opponentFigures: currentBlackFigures,
-        })) {
-          setBlackFigures(
-            getFiguresWithoutDeleted({
-              figures: currentBlackFigures,
-              position: moveTo,
-            }),
-          );
-        }
-
-        newWhiteFigures[i] = newFigure;
-
-        setWhiteFigures(newWhiteFigures);
-        return;
-      }
+    if (figure.color === 'black') {
+      checkIsThisFigureMatchInColorAndThisFigureIsToMoveAndSetFigures({
+        currentFigures: currentBlackFigures,
+        currentOpponentFigures: currentWhiteFigures,
+        figure,
+        moveTo,
+        setFigures: setBlackFigures,
+        setOpponentFigures: setWhiteFigures,
+      });
+    } else {
+      checkIsThisFigureMatchInColorAndThisFigureIsToMoveAndSetFigures({
+        currentFigures: currentWhiteFigures,
+        currentOpponentFigures: currentBlackFigures,
+        figure,
+        moveTo,
+        setFigures: setWhiteFigures,
+        setOpponentFigures: setBlackFigures,
+      });
     }
-
-    for (let i = 0; i < currentBlackFigures.length; i++) {
-      if (
-        currentBlackFigures[i].position.x === figure.position.x
-        && currentBlackFigures[i].position.y === figure.position.y
-      ) {
-        const newBlackFigures = [...currentBlackFigures];
-
-        const newFigure = figure;
-
-        newFigure.position = moveTo;
-
-        if (isCellWithOpponentFigure({
-          position: moveTo,
-          figureColor: figure.color,
-          opponentFigures: currentWhiteFigures,
-        })) {
-          setWhiteFigures(
-            getFiguresWithoutDeleted({
-              figures: currentWhiteFigures,
-              position: moveTo,
-            }),
-          );
-        }
-
-        newBlackFigures[i] = newFigure;
-
-        setBlackFigures(newBlackFigures);
-        return;
-      }
-    }
-  };
+  }, []);
 
   const value = useMemo(() => ([
     whiteFigures,

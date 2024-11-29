@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-vars */
-import React from 'react';
+import React, { useCallback, useEffect } from 'react';
 
 import { Box, styled } from '@mui/material';
 
@@ -17,21 +17,35 @@ import { Position } from '../../types/Position';
 type StyledCellBoxProps = {
   isDark: boolean,
   hasFigure: boolean,
+  isCellInCheck: boolean,
 };
 
 const StyledCellBox = styled(Box, {
-  shouldForwardProp: (props) => props !== 'isDark' && props !== 'hasFigure',
+  shouldForwardProp: (props) => props !== 'isDark' && props !== 'hasFigure' && props !== 'isCellInCheck',
 })<StyledCellBoxProps>(({
   isDark,
   hasFigure,
-}) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  backgroundColor: `${isDark ? '#B58863' : '#F0D9B5'}`,
-  cursor: `${hasFigure ? 'grab' : ''}`,
-  position: 'relative',
-}));
+  isCellInCheck,
+}) => {
+  let backgroundColor;
+
+  if (isCellInCheck) {
+    backgroundColor = '#CD3D2C';
+  } else if (isDark) {
+    backgroundColor = '#B58863';
+  } else {
+    backgroundColor = '#F0D9B5';
+  }
+
+  return {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor,
+    cursor: `${hasFigure ? 'grab' : ''}`,
+    position: 'relative',
+  };
+});
 
 type Props = {
   cell: Cell,
@@ -43,7 +57,7 @@ type Props = {
 const isPropsAreEqual = (prevProps: Props, nextProps: Props) => {
   const isFigureChanged = JSON.stringify(prevProps.cell)
     === JSON.stringify(nextProps.cell);
-  
+
   const isMovePositionChanged = checkIsThisMovePosition(
     prevProps.availableMoves,
     prevProps.cell.position,
@@ -51,7 +65,7 @@ const isPropsAreEqual = (prevProps: Props, nextProps: Props) => {
     nextProps.availableMoves,
     nextProps.cell.position,
   );
-  
+
   return isFigureChanged && isMovePositionChanged;
 };
 
@@ -61,8 +75,44 @@ export const BoardCell: React.FC<Props> = React.memo(({
   availableMoves,
   setAvailableMoves,
 }) => {
+  const {
+    position,
+  } = cell;
+
+  const {
+    figureType,
+  } = cell.figure ? cell.figure : {};
+
   const [, , , , selectedFigure, selectFigure] = useFigures();
-  const [playerTurn] = useGameStatus();
+
+  const [playerTurn,
+    ,
+    ,
+    , ,
+    , , 
+    whiteKingCheck,
+    blackKingCheck,
+  ] = useGameStatus();
+
+  const checkIsHereKingAndHeInCheck = (cellForCheck: Cell) => {
+    if (!cellForCheck.figure) {
+      return false;
+    }
+
+    if (cellForCheck.figure.figureType !== 'king') {
+      return false;
+    }
+
+    if (cellForCheck.figure.color === 'black' && blackKingCheck) {
+      return true;
+    }
+
+    if (cellForCheck.figure.color === 'white' && whiteKingCheck) {
+      return true;
+    }
+
+    return false;
+  };
 
   const handleSelect = (selectedCell: Cell) => {
     if (!selectedCell.figure) {
@@ -95,11 +145,17 @@ export const BoardCell: React.FC<Props> = React.memo(({
     }
   };
 
+  useEffect(() => {
+    console.log({ whiteKingCheck });
+    console.log({ blackKingCheck });
+  }, [whiteKingCheck, blackKingCheck]);
+
   return (
     <StyledCellBox
       key={uuid()}
       isDark={isDark}
       hasFigure={Boolean(cell.figure)}
+      isCellInCheck={checkIsHereKingAndHeInCheck(cell)}
       onClick={() => handleSelect(cell)}
     >
       {
@@ -110,7 +166,7 @@ export const BoardCell: React.FC<Props> = React.memo(({
         )
       }
       {
-        checkIsThisMovePosition(availableMoves, cell.position) && (
+        (checkIsThisMovePosition(availableMoves, position) && figureType !== 'king') && (
           <CaptureIndicator
             cell={cell}
             setAvailableMoves={setAvailableMoves}

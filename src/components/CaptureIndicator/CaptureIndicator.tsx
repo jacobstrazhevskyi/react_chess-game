@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import { Box, styled } from '@mui/material';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -6,6 +6,7 @@ import { faCircle } from '@fortawesome/free-solid-svg-icons';
 import { Cell } from '../../types/Cell';
 import { useFigures } from '../../utils/hooks/gameHooks/useFigures';
 import { useGameStatus } from '../../utils/hooks/gameHooks/useGameStatus';
+import { Figure } from '../../types/Figure';
 
 const StyledCaptureIndicator = styled(Box)({
   position: 'absolute',
@@ -34,15 +35,26 @@ export const CaptureIndicator: React.FC<Props> = ({
   setAvailableMoves,
 }) => {
   const [whiteFigures, , blackFigures, , selectedFigure, selectFigure, moveFigure] = useFigures();
-  const [playerTurn, togglePlayerTurn] = useGameStatus();
+
+  const [playerTurn, togglePlayerTurn, , , , , setLastMovedFigure] = useGameStatus();
 
   const handleMove = (selectedCell: Cell) => {
+    const moveTo = selectedCell.position;
+
     moveFigure({
-      moveTo: selectedCell.position,
+      moveTo,
       figure: selectedFigure,
       currentWhiteFigures: whiteFigures,
       currentBlackFigures: blackFigures,
     });
+
+    const movedFigure: Figure = {
+      ...selectedFigure,
+      position: moveTo,
+    };
+
+    setLastMovedFigure(movedFigure);
+
     selectFigure({
       x: -1,
       y: -1,

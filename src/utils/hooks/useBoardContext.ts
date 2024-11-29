@@ -15,7 +15,7 @@ type Position = {
 
 type GetFigureMovesProps = {
   currentBoard: Board,
-  figure: Figure,
+  figure: Figure | undefined,
 };
 
 type BoardContextType = [
